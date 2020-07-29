@@ -21,11 +21,12 @@ const SHARED_AUDIT_CONTEXT = {
 }
 
 export default class Auditor {
-    constructor (traceLogs, devtoolsLogs) {
+    constructor (traceLogs, devtoolsLogs, isMobile) {
         this.devtoolsLogs = devtoolsLogs
         this.traceLogs = traceLogs
         this.url = traceLogs.pageUrl
         this.loaderId = traceLogs.loaderId
+        this.isMobile = isMobile
     }
 
     _audit (AUDIT, params = {}) {
@@ -38,7 +39,7 @@ export default class Auditor {
             return AUDIT.audit({
                 traces: { defaultPass: this.traceLogs },
                 devtoolsLogs: { defaultPass: this.devtoolsLogs },
-                TestedAsMobileDevice: true,
+                TestedAsMobileDevice: this.isMobile,
                 ...params
             }, auditContext)
         } catch (e) {

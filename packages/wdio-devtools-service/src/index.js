@@ -69,7 +69,7 @@ export default class DevToolsService {
          * update custom commands once tracing finishes
          */
         this.traceGatherer.once('tracingComplete', (traceEvents) => {
-            const auditor = new Auditor(traceEvents, this.devtoolsGatherer.getLogs())
+            const auditor = new Auditor(traceEvents, this.devtoolsGatherer.getLogs(), this.isMobile)
             auditor.updateCommands(global.browser)
         })
 
