@@ -44,6 +44,18 @@ export default class DevToolsService {
          */
         this._setThrottlingProfile(this.networkThrottling, this.cpuThrottling, this.cacheEnabled)
 
+        if (this.isMobile) {
+            log.info('Overriden device metrics to Moto G (4)')
+            await this._emulateDevice({
+                viewport: {
+                    width: 360,
+                    height: 640,
+                    isMobile: true,
+                    hasTouch: true,
+                },
+                userAgent: 'Moto G (4)',
+            })
+        }
         const url = ['url', 'navigateTo'].some(cmdName => cmdName === commandName) ? params[0] : 'click transition'
         return this.traceGatherer.startTracing(url)
     }
@@ -78,6 +90,9 @@ export default class DevToolsService {
                 log.info('Disable throttling')
                 await this._setThrottlingProfile('online', 0, true)
 
+                log.info('Clears the overriden device metrics')
+                await this._clearDeviceMetricsOverride()
+
                 log.info('continuing with next WebDriver command')
                 resolve()
             })
@@ -87,7 +102,7 @@ export default class DevToolsService {
     /**
      * set flag to run performance audits for page transitions
      */
-    _enablePerformanceAudits ({ networkThrottling = DEFAULT_NETWORK_THROTTLING_STATE, cpuThrottling = 4, cacheEnabled = false } = {}) {
+    _enablePerformanceAudits ({ networkThrottling = DEFAULT_NETWORK_THROTTLING_STATE, cpuThrottling = 4, cacheEnabled = false, isMobile = false } = {}) {
         if (!Object.prototype.hasOwnProperty.call(NETWORK_STATES, networkThrottling)) {
             throw new Error(`Network throttling profile "${networkThrottling}" is unknown, choose between ${Object.keys(NETWORK_STATES).join(', ')}`)
         }
@@ -99,6 +114,7 @@ export default class DevToolsService {
         this.networkThrottling = networkThrottling
         this.cpuThrottling = cpuThrottling
         this.cacheEnabled = Boolean(cacheEnabled)
+        this.isMobile = Boolean(isMobile)
         this.shouldRunPerformanceAudits = true
     }
 
@@ -139,6 +155,13 @@ export default class DevToolsService {
         await page.setCacheEnabled(Boolean(cacheEnabled))
         await this.devtoolsDriver.send('Emulation.setCPUThrottlingRate', { rate: cpuThrottling })
         await this.devtoolsDriver.send('Network.emulateNetworkConditions', NETWORK_STATES[networkThrottling])
+    }
+
+    /**
+     * helper method to clear device metrics overriden
+     */
+    async _clearDeviceMetricsOverride() {
+        await this.devtoolsDriver.send('Emulation.clearDeviceMetricsOverride')
     }
 
     async _setDevtools() {
